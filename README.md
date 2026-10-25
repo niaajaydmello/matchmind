@@ -12,7 +12,7 @@ The live workspace includes a match clock, scoreline, pitch visualization, playe
 
 The historical workspace uses five synthetic previous matches to calculate form, points, average possession, pass accuracy, shots per match, expected goals, pressure recoveries, and distance covered. Users can select an individual match or compare the five-match baseline.
 
-The narrative workspace supports Analyst mode and Casual fan mode, plus persona-specific moment copy for Analyst, Casual fan, Broadcaster, and Social editor. Language switching is available for English, Español, and Français.
+The narrative workspace supports Analyst mode and Casual fan mode, plus persona-specific moment copy for Analyst, Casual fan, Broadcaster, and Social editor. Language switching is available for English, Hindi, Spanish, Arabic, Portuguese, French, and Mandarin.
 
 The tactical catalogue lets users search and filter reusable patterns such as pressing waves, build-up patterns, territory overloads, and game-state behaviour. A selected pattern opens as a tactical-breakdown interaction in the demo.
 
@@ -58,7 +58,9 @@ The tactical catalogue lets users search and filter reusable patterns such as pr
 - Social editor persona for headline-style moment framing.
 - Player focus mode for L. Medina, J. Alvarez, and M. Okafor.
 - Favorite-club and player-focus preference surfaces.
-- English, Español, and Français output options.
+- English, Hindi, Spanish, Arabic, Portuguese, French, and Mandarin output options.
+- Guided Demo path for a judge-friendly five-step walkthrough.
+- Recap Studio, Tactical Lab, Ask the Match chat, and Impact/roadmap surfaces.
 - Responsive desktop and mobile layout.
 - Scroll-reveal text and panel animations.
 - Scroll-linked floating football motif to make the long-form experience feel like a guided match journey.
@@ -126,6 +128,7 @@ matchmind/
 ├── app.config.ts              Manus project branding metadata
 ├── public/manus-routes.json   Managed route manifest
 ├── src/main.js                MatchMind UI, synthetic data, state, and interactions
+├── src/data/sample-match.json  25-event provider-neutral match dataset with lineups and stats
 ├── src/pipeline.js            Structured event-to-explanation pipeline
 ├── src/style.css              Core visual system and responsive dashboard styles
 ├── src/history.css            Historical match analytics styles
@@ -154,3 +157,63 @@ The public source repository is [github.com/niaajaydmello/matchmind](https://git
 ## Status
 
 MatchMind is a polished hackathon prototype. The synthetic intelligence pipeline, explainability UX, historical aggregation, personalization, tactical catalogue, and responsive presentation are implemented. Managed Foundry, Fabric, Azure MCP, live football feeds, durable databases, and production model routing remain explicit integration seams for a next-stage deployment.
+
+## Hackathon build alignment
+
+This version is intentionally implemented as a lightweight Vite + vanilla JavaScript app inside the existing Manus Webdev project so the live demo remains fast, self-contained, and deployable as static output. The product architecture mirrors the requested Next.js/Tailwind-style separation of concerns—data, state, view surfaces, and provider seams—without introducing a framework migration risk into the existing checkpointed website.
+
+### Additional demo surfaces
+
+- **Landing experience:** premium hero, interactive TechText-style canvas wordmark, live preview, Launch/Guided Demo actions, and scroll-reveal storytelling.
+- **Live Match Center:** 25-event-inspired synthetic match state, event feed, simulated clock, play/pause/replay/speed controls, momentum/rhythm chart, pitch view, and selected-event explanations.
+- **AI Moment Explainer:** What happened, Why it mattered, Tactical context, confidence, evidence tags, and counterfactual reasoning.
+- **Recap Studio:** Match report, 60-second script, tweet thread, and Instagram caption outputs with copy/export actions. These are deterministic MOCK-mode outputs grounded in the same event facts.
+- **Tactical Lab:** passing network, pressing intensity, and shot-map views with adjacent AI-style readings.
+- **Ask the Match:** grounded chat with suggested questions, cited timestamps, and an explicit no-invented-stats contract.
+- **Language and persona switcher:** English, Hindi, Spanish, Arabic, Portuguese, French, and Mandarin labels with narrative regeneration; Analyst, Casual Fan, Broadcaster, and Social Media Editor personas.
+- **Impact page:** audience benefits and a three-step roadmap for live provider adapters, AI evaluation, and saved workspaces.
+- **Guided Demo:** five-step judge flow that walks from live event to explanation, chat, recap, and impact.
+
+### Architecture diagram
+
+```mermaid
+flowchart LR
+  A[Synthetic event stream] --> B[Versioned event contract]
+  B --> C[Ingest + data audit]
+  C --> D[Interpretation + pattern detectors]
+  D --> E[Evidence retrieval]
+  E --> F[Explain + verify claims]
+  F --> G{Audience adapter}
+  G --> H[Live overlay]
+  G --> I[Recap Studio]
+  G --> J[Ask the Match]
+  G --> K[Multilingual narrative]
+  B -. future adapter .-> L[Premier League / tracking provider]
+  F -. future provider .-> M[Azure OpenAI or GitHub Models]
+  E -. future storage .-> N[Fabric / Azure database]
+```
+
+### AI provider abstraction and MOCK mode
+
+The current frontend keeps the provider boundary explicit through `src/pipeline.js`, `askAnswer()`, and the generated output surfaces. The default demo is MOCK mode: it uses realistic canned outputs, never requires an API key, and cites only the local synthetic event model. A production adapter can replace those functions with Azure OpenAI or GitHub Models through environment variables without changing the viewer-facing components.
+
+### Screenshots
+
+The latest responsive dashboard and long-form sections are validated in the Manus Preview during development. For a local screenshot pass, run the dev server and capture the page at desktop and mobile widths. The visual system is dark-mode-first, uses Manrope and DM Mono, and includes reduced-motion fallbacks.
+
+### Deployment
+
+```bash
+npm ci
+npm run build
+```
+
+The managed static publication contract uses `npm ci && npm run build` and publishes the `dist` directory. The latest successful published version is available at [matchmind-g9yvdhnn.manus.space](https://matchmind-g9yvdhnn.manus.space).
+
+### Future roadmap
+
+1. Replace the local event generator with provider adapters that normalize real tracking feeds into the documented event contract.
+2. Route grounded explanation and narrative generation through Azure OpenAI or GitHub Models with evaluation traces and content-safety checks.
+3. Persist saved matches, notes, favourite clubs, recap exports, and language preferences in Azure database/Fabric-backed services.
+4. Add real passing-network and heatmap computation from complete event coordinates, plus video auto-eventing ingestion.
+5. Add authenticated workspaces and publisher controls for broadcaster and social teams.

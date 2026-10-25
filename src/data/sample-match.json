@@ -1,0 +1,49 @@
+{
+  "schema_version": "matchmind.match-event.v1",
+  "provider": "synthetic-generator",
+  "match": {
+    "id": "mm-2026-1025-an-rb",
+    "competition": "Continental Premier Division",
+    "season": "2026/27",
+    "venue": "Norte Arena",
+    "kickoff": "2026-10-25T19:00:00Z",
+    "home_team": "Atletico Norte",
+    "away_team": "Real Bahia",
+    "score": { "home": 1, "away": 0 }
+  },
+  "lineups": {
+    "home": ["L. Medina", "J. Alvarez", "R. Silva", "M. Okafor", "E. Granqvist", "A. Ekstrom", "B. Kalstrom", "F. Jokic", "Y. Iverson", "R. Solberg", "L. Solberg"],
+    "away": ["D. Marquez", "T. Vela", "C. Ortega", "N. Duarte", "P. Rios", "S. Costa", "I. Mora", "G. Santos", "V. Bessa", "M. Faria", "A. Nunes"]
+  },
+  "team_stats": {
+    "home": { "possession": 61, "shots": 11, "shots_on_target": 5, "xg": 1.42, "passes": 488, "pass_accuracy": 87, "corners": 6, "fouls": 8, "pressure_recoveries": 11 },
+    "away": { "possession": 39, "shots": 6, "shots_on_target": 2, "xg": 0.48, "passes": 332, "pass_accuracy": 78, "corners": 2, "fouls": 12, "pressure_recoveries": 4 }
+  },
+  "events": [
+    { "id": "e01", "minute": "00:00", "type": "kickoff", "team": "Atletico Norte", "player": "L. Medina", "x": 50, "y": 50 },
+    { "id": "e02", "minute": "04:12", "type": "pass", "team": "Atletico Norte", "player": "J. Alvarez", "receiver": "L. Medina", "distance_m": 24, "accuracy": 0.96, "difficulty": 0.62, "x": 46, "y": 52 },
+    { "id": "e03", "minute": "07:40", "type": "interception", "team": "Real Bahia", "player": "P. Rios", "x": 44, "y": 51 },
+    { "id": "e04", "minute": "12:18", "type": "pressure_sequence", "team": "Atletico Norte", "player": "M. Okafor", "duration_s": 7.4, "recoveries": 2, "x": 32, "y": 43 },
+    { "id": "e05", "minute": "15:03", "type": "shot", "team": "Atletico Norte", "player": "R. Silva", "xg": 0.08, "speed_kmh": 86, "x": 72, "y": 38 },
+    { "id": "e06", "minute": "18:32", "type": "foul", "team": "Real Bahia", "player": "C. Ortega", "x": 57, "y": 48 },
+    { "id": "e07", "minute": "23:10", "type": "possession_shift", "team": "Atletico Norte", "player": "A. Ekstrom", "delta": 6, "x": 61, "y": 44 },
+    { "id": "e08", "minute": "28:05", "type": "pass", "team": "Atletico Norte", "player": "F. Jokic", "receiver": "J. Alvarez", "distance_m": 32, "accuracy": 0.91, "difficulty": 0.78, "x": 51, "y": 56 },
+    { "id": "e09", "minute": "31:44", "type": "card", "team": "Real Bahia", "player": "S. Costa", "card": "yellow", "x": 64, "y": 47 },
+    { "id": "e10", "minute": "36:21", "type": "shot", "team": "Real Bahia", "player": "M. Faria", "xg": 0.05, "speed_kmh": 74, "x": 77, "y": 58 },
+    { "id": "e11", "minute": "41:55", "type": "pressing_wave", "team": "Atletico Norte", "player": "L. Medina", "duration_s": 11.2, "recoveries": 3, "x": 69, "y": 40 },
+    { "id": "e12", "minute": "45:00", "type": "half_time", "team": "Atletico Norte", "score": "0-0" },
+    { "id": "e13", "minute": "48:16", "type": "substitution", "team": "Real Bahia", "player_in": "V. Bessa", "player_out": "A. Nunes" },
+    { "id": "e14", "minute": "51:03", "type": "pass", "team": "Atletico Norte", "player": "J. Alvarez", "receiver": "R. Silva", "distance_m": 29, "accuracy": 0.88, "difficulty": 0.74, "x": 58, "y": 44 },
+    { "id": "e15", "minute": "54:29", "type": "tackle", "team": "Atletico Norte", "player": "M. Okafor", "reaction_s": 0.8, "x": 42, "y": 51 },
+    { "id": "e16", "minute": "57:38", "type": "possession_shift", "team": "Atletico Norte", "player": "L. Medina", "delta": 9, "x": 65, "y": 41 },
+    { "id": "e17", "minute": "59:44", "type": "sustained_spell", "team": "Atletico Norte", "events": 5, "duration_s": 138, "x": 72, "y": 43 },
+    { "id": "e18", "minute": "61:11", "type": "foul", "team": "Atletico Norte", "player": "B. Kalstrom", "x": 54, "y": 39 },
+    { "id": "e19", "minute": "63:08", "type": "shot", "team": "Atletico Norte", "player": "R. Silva", "xg": 0.18, "speed_kmh": 102, "x": 79, "y": 44 },
+    { "id": "e20", "minute": "65:02", "type": "pressure_sequence", "team": "Real Bahia", "player": "D. Marquez", "duration_s": 6.1, "recoveries": 1, "x": 34, "y": 55 },
+    { "id": "e21", "minute": "67:12", "type": "pass", "team": "Atletico Norte", "player": "J. Alvarez", "receiver": "L. Medina", "distance_m": 32, "accuracy": 0.87, "difficulty": 0.89, "x": 66, "y": 42 },
+    { "id": "e22", "minute": "68:41", "type": "pressure", "team": "Atletico Norte", "player": "L. Medina", "duration_s": 9.2, "xg_added": 0.31, "x": 74, "y": 38 },
+    { "id": "e23", "minute": "69:04", "type": "shot", "team": "Atletico Norte", "player": "L. Medina", "xg": 0.22, "speed_kmh": 91, "x": 82, "y": 38 },
+    { "id": "e24", "minute": "70:20", "type": "goal", "team": "Atletico Norte", "player": "R. Silva", "assist": "L. Medina", "xg": 0.31, "x": 86, "y": 44 },
+    { "id": "e25", "minute": "72:11", "type": "card", "team": "Atletico Norte", "player": "M. Okafor", "card": "yellow", "x": 52, "y": 50 }
+  ]
+}

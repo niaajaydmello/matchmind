@@ -4,7 +4,9 @@ import './agent.css';
 import './counterfactual.css';
 import './reference-features.css';
 import './scroll-motion.css';
+import './submission-features.css';
 import { pipelineStages, syntheticEventSchema, runAgentTrace } from './pipeline.js';
+import { mountTechText } from './tech-text.js';
 
 const icons = {
   activity: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
@@ -35,6 +37,12 @@ const state = {
   persona: 'Analyst',
   catalogQuery: '',
   catalogFilter: 'All',
+  guidedDemo: false,
+  demoStep: 0,
+  askQuery: '',
+  askMessages: [],
+  recapTab: 'Match report',
+  tacticalTab: 'Passing network',
   isLive: true,
   elapsed: 68 * 60 + 42,
   selectedEvent: 'pressure',
@@ -100,6 +108,24 @@ function filteredCatalog() {
   });
 }
 
+function askAnswer(query) {
+  const q = query.toLowerCase();
+  if (q.includes('press') || q.includes('60')) return { answer: 'The press became less effective after the 60th minute because Real Bahía stopped receiving square in the left channel. Atlético Norte recovered 3 times within 10 seconds before the phase, then only once in the next spell.', citations: ['54:29', '59:44', '68:41'] };
+  if (q.includes('medina') || q.includes('player')) return { answer: 'Medina is the match’s highest-leverage player: his 9.2-second pressure action forced the key turnover, added +0.31 expected threat, and moved the next possession 24m closer to goal.', citations: ['68:41', '67:12'] };
+  if (q.includes('win') || q.includes('control')) return { answer: 'The control edge comes from territory and recovery timing rather than raw possession. Atlético Norte have 61% control, 87% pass quality, and five attacking-third possessions in the last 2:18.', citations: ['59:44', '68:41'] };
+  return { answer: 'Ask about the press, Medina, control, or what changed after the 60th minute. I will answer only from the synthetic event stream and cite the moments used.', citations: ['68:41'] };
+}
+
+function demoSteps() {
+  return [
+    { title: 'Watch the live event', copy: 'Start with the match clock, pitch, and event stream.', target: '#live' },
+    { title: 'Decode the moment', copy: 'Select a moment to see what happened and why it mattered.', target: '#live' },
+    { title: 'Ask the match', copy: 'Use grounded chat to investigate a tactical question.', target: '#ask' },
+    { title: 'Generate the story', copy: 'Switch output formats for a recap, script, or social post.', target: '#recap' },
+    { title: 'Explore the impact', copy: 'See who the platform is designed to help.', target: '#impact' }
+  ];
+}
+
 const narratives = {
   English: {
     analyst: 'Atlético Norte are winning the second ball battle. Their pressure is not constant — it is timed: the last three recoveries arrived within 10 seconds of an opponent’s first touch facing their own goal.',
@@ -115,7 +141,20 @@ const narratives = {
     analyst: 'Atlético Norte domine les deuxièmes ballons. Leur pressing est ciblé : les trois dernières récupérations sont arrivées dans les dix secondes après une première touche dos au jeu.',
     casual: 'Atlético Norte rend le match difficile. Ils récupèrent vite quand l’adversaire reçoit dos au but.',
     recap: 'Atlético Norte contrôle le match grâce à un pressing intelligent et des récupérations rapides. Medina anime la seconde période.'
-  }
+  },
+  हिन्दी: { analyst: 'एटलेटिको नॉर्टे दूसरी गेंदों पर नियंत्रण बना रहा है। दबाव लगातार नहीं, बल्कि सही समय पर है।', casual: 'एटलेटिको नॉर्टे गेंद जल्दी वापस जीत रहा है और मैच को अपने पक्ष में मोड़ रहा है।', recap: 'स्मार्ट प्रेसिंग और तेज़ रिकवरी ने एटलेटिको नॉर्टे को मैच में नियंत्रण दिया।' },
+  العربية: { analyst: 'يحافظ أتلتيكو نورتي على السيطرة على الكرات الثانية بضغط محسوب، لا بضغط مستمر.', casual: 'أتلتيكو نورتي يستعيد الكرة بسرعة ويجعل المباراة أصعب على الخصم.', recap: 'الضغط الذكي والاسترداد السريع منحا أتلتيكو نورتي السيطرة في الشوط الثاني.' },
+  Português: { analyst: 'O Atlético Norte domina as segundas bolas com pressão temporizada, não constante.', casual: 'O Atlético Norte recupera a bola rápido e dita o ritmo do jogo.', recap: 'Pressão inteligente e recuperações rápidas deram o controle ao Atlético Norte.' },
+  普通话: { analyst: '北方竞技通过有节奏的压迫控制第二落点，三次关键回收都发生在十秒内。', casual: '北方竞技很快夺回球权，比赛节奏正在向他们倾斜。', recap: '精准压迫和快速回收帮助北方竞技掌控下半场。' }
+};
+
+const languageOptions = ['English', 'हिन्दी', 'Español', 'العربية', 'Português', 'Français', '普通话'];
+
+const recapOutputs = {
+  'Match report': { title: 'Atlético Norte 1–0 Real Bahía', body: 'Atlético Norte’s 9.2-second press turned a calm build-up into the match’s clearest attacking window. The home side finished the half with 61% control, 87% pass quality, and three recoveries inside ten seconds of an opponent’s first touch facing their own goal.', label: 'FULL MATCH REPORT' },
+  '60-second script': { title: 'A match changed by pressure', body: '[0:00] Atlético Norte start fast. [0:18] Medina triggers the press and wins it high. [0:31] Alvarez breaks the next line. [0:44] Silva shoots before the angle closes. [0:60] The story of the half: not more possession, but better-timed pressure.', label: 'VOICEOVER SCRIPT' },
+  'Tweet thread': { title: 'Thread: the 9.2-second press', body: '1/ Atlético Norte’s biggest moment was not the scoreline — it was the speed of the recovery. 2/ Medina compressed the left channel for 9.2s. 3/ The turnover added +0.31 xT. 4/ That is how control becomes a chance.', label: 'SOCIAL THREAD' },
+  'Instagram caption': { title: 'Pressure, then purpose.', body: 'Medina wins it high. Alvarez breaks the line. Silva gets the shot away. One sequence, three decisions, and a match that suddenly tilts. #MatchMind #ExplainTheGame', label: 'CAPTION' }
 };
 
 function formatClock(seconds) {
@@ -193,11 +232,11 @@ function render() {
       <div class="scroll-orbit" aria-hidden="true"><span class="orbit-line"></span><span class="scroll-ball"><i></i><b></b><em></em></span><small>SCROLL / EXPLORE</small></div>
       <header class="topbar">
         <a class="brand" href="#top" aria-label="MatchMind home"><span class="brand-mark"><i></i><i></i><i></i></span><span>match<span>mind</span></span></a>
-        <nav class="topnav"><a class="active" href="#live">Live room</a><a href="#narrative">Narrative studio</a><a href="#data">Data lab</a><a href="#architecture">System</a></nav>
+        <nav class="topnav"><a class="active" href="#live">Live room</a><a href="#recap">Recap</a><a href="#tactical-lab">Tactical lab</a><a href="#ask">Ask the match</a><a href="#impact">Impact</a></nav>
         <div class="top-actions">
           <span class="live-indicator"><span></span> Live sync</span>
           <button class="icon-btn" aria-label="Toggle sound">${icons.volume}</button>
-          <label class="language-select">${icons.globe}<select id="language-select" aria-label="Language"><option ${state.language === 'English' ? 'selected' : ''}>English</option><option ${state.language === 'Español' ? 'selected' : ''}>Español</option><option ${state.language === 'Français' ? 'selected' : ''}>Français</option></select>${icons.chevron}</label>
+          <label class="language-select">${icons.globe}<select id="language-select" aria-label="Language">${languageOptions.map(language => `<option ${state.language === language ? 'selected' : ''}>${language}</option>`).join('')}</select>${icons.chevron}</label>
           <div class="avatar">AK</div>
         </div>
       </header>
@@ -207,11 +246,11 @@ function render() {
           <div>
             <p class="eyebrow">MATCHMIND / ${state.isLive ? 'LIVE MATCH INTELLIGENCE' : 'MATCH ARCHIVE'}</p>
             <h1>Make the moment<br /><em>make sense.</em></h1>
-            <p class="intro-copy">From event stream to explainable story — MatchMind helps every viewer understand what just changed, and why it matters.</p>
+            <p class="intro-copy">From event stream to explainable story — MatchMind helps every viewer understand what just changed, and why it matters.</p><div id="tech-text-mount" class="tech-text-mount"></div>
           </div>
           <div class="intro-actions">
             <button class="secondary-btn" id="refresh-sim">${icons.refresh}<span>Simulate next event</span></button>
-            <button class="primary-btn" id="generate-recap">Generate recap <span>↗</span></button>
+            <button class="secondary-btn" id="guided-demo">${icons.play}<span>Guided demo</span></button><button class="primary-btn" id="generate-recap">Generate recap <span>↗</span></button>
           </div>
         </section>
 
@@ -221,6 +260,7 @@ function render() {
           <div class="status-cell"><span class="status-icon">${icons.clock}</span><div><small>LATENCY</small><strong>380 ms <b>optimal</b></strong></div></div>
           <div class="status-cell status-audience"><span class="status-icon">${icons.target}</span><div><small>VIEWER MODE</small><strong>${casual ? 'Casual fan' : 'Analyst'} <b>personalized</b></strong></div></div>
         </section>
+        ${state.guidedDemo ? `<section class="guided-demo panel"><div><span class="demo-kicker">GUIDED DEMO / ${state.demoStep + 1} OF ${demoSteps().length}</span><h2>${demoSteps()[state.demoStep].title}</h2><p>${demoSteps()[state.demoStep].copy}</p></div><div class="demo-actions"><button class="secondary-btn" id="demo-close">Exit</button><button class="primary-btn" id="demo-next">${state.demoStep === demoSteps().length - 1 ? 'Finish demo' : 'Next step'} <span>→</span></button></div><div class="demo-progress">${demoSteps().map((step, index) => `<i class="${index <= state.demoStep ? 'active' : ''}"></i>`).join('')}</div></section>` : ''}
 
         <section class="dashboard-grid" id="live">
           <article class="panel match-panel">
@@ -266,6 +306,14 @@ function render() {
 
         <section class="agent-section" id="architecture"><div class="section-heading"><div><p class="eyebrow">AGENT SYSTEM / ORCHESTRATION TRACE</p><h2>From raw event to human story.</h2></div><p>A transparent five-stage pipeline keeps every insight explainable, machine-readable, and ready for live production workflows.</p></div><div class="agent-layout"><article class="panel pipeline-panel"><div class="pipeline-head"><div><span class="trace-status"><i></i> processing live event</span><strong>${agentTrace.envelope.event_id}</strong></div><span class="latency-chip">${agentTrace.envelope.received_at_ms} ms end-to-end</span></div><div class="pipeline-flow">${pipelineStages.map((stage, index) => `<div class="pipeline-stage ${stage.color}"><div class="stage-number">${stage.number}</div><div class="stage-copy"><span>${stage.label}</span><strong>${stage.title}</strong><small>${stage.description}</small><em>${stage.output}</em></div>${index < pipelineStages.length - 1 ? '<span class="stage-connector">→</span>' : ''}</div>`).join('')}</div><div class="trace-result"><span class="result-icon">${icons.bolt}</span><div><small>AGENT OUTPUT / EVIDENCE-BACKED EXPLANATION</small><p>${agentTrace.explanation.rationale}</p><small class="counterfactual">Counterfactual: ${agentTrace.explanation.counterfactual}</small><span class="evidence-tags">${agentTrace.explanation.evidence.map(item => `<b>${item}</b>`).join('')}</span></div><span class="trace-confidence">94%<small>confidence</small></span></div></article><article class="panel implementation-panel"><div class="panel-header"><div><p class="eyebrow">IMPLEMENTATION CONTRACT</p><h2>Built to plug in.</h2></div><span class="connector-ready">● connector-ready</span></div><div class="stack-list"><div><span class="stack-logo foundry">F</span><p><strong>Foundry / narrative agents</strong><small>Replace the local demo runner with managed model routing and evaluation.</small></p></div><div><span class="stack-logo fabric">▦</span><p><strong>Fabric / event lakehouse</strong><small>Stream synthetic or tracking-provider events into durable match state.</small></p></div><div><span class="stack-logo mcp">⌘</span><p><strong>Azure MCP / tool layer</strong><small>Expose match state, player focus, and overlay rendering as governed tools.</small></p></div><div><span class="stack-logo azure">◆</span><p><strong>Azure database / API</strong><small>Persist match metadata, audience preferences, replayable narratives, and audit traces.</small></p></div></div><div class="schema-preview"><div><span>EVENT CONTRACT / v1</span><b>${syntheticEventSchema.length} fields</b></div>${syntheticEventSchema.slice(0, 4).map(field => `<code><i>${field[0]}</i><span>${field[1]}</span><b>${field[2]}</b></code>`).join('')}<small>+ ${syntheticEventSchema.length - 4} more fields · schema validated</small></div></article></div></section>
 
+        <section class="recap-section" id="recap"><div class="section-heading"><div><p class="eyebrow">RECAP STUDIO / ONE CLICK OUTPUTS</p><h2>Turn the match into the story.</h2></div><p>Generate a full report, a 60-second voiceover, a thread, or a caption from the same verified event evidence.</p></div><div class="recap-grid"><article class="panel recap-panel"><div class="recap-tabs">${Object.keys(recapOutputs).map(tab => `<button class="${state.recapTab === tab ? 'active' : ''}" data-recap-tab="${tab}">${tab}</button>`).join('')}</div><div class="recap-output"><span class="recap-label">${recapOutputs[state.recapTab].label}</span><h3>${recapOutputs[state.recapTab].title}</h3><p>${recapOutputs[state.recapTab].body}</p></div><div class="recap-actions"><button class="secondary-btn" id="copy-recap">Copy output</button><button class="secondary-btn" id="export-recap">Export .txt <span>↗</span></button><span class="generated-label">${icons.activity} grounded in 12 cited events</span></div></article><article class="panel recap-side"><span class="eyebrow">HIGHLIGHT QUEUE</span><div class="highlight-row"><span>01</span><div><strong>Pressure forced the turnover</strong><small>68:41 · +0.31 xT · L. Medina</small></div><b>HIGH</b></div><div class="highlight-row"><span>02</span><div><strong>Line-breaking pass</strong><small>67:12 · 32m · J. Alvarez</small></div><b>MED</b></div><div class="highlight-row"><span>03</span><div><strong>Shot from a shrinking window</strong><small>63:08 · 0.18 xG · R. Silva</small></div><b>MED</b></div><div class="recap-confidence">${icons.target}<span>All outputs pass the evidence check</span><strong>94%</strong></div></article></div></section>
+
+        <section class="tactical-lab-section" id="tactical-lab"><div class="section-heading"><div><p class="eyebrow">TACTICAL LAB / MATCH SHAPE</p><h2>See the shape behind the score.</h2></div><p>Three complementary views turn the event stream into a coachable match picture: who connected, where pressure landed, and how shots were created.</p></div><div class="lab-tabs">${['Passing network', 'Pressing intensity', 'Shot map'].map(tab => `<button class="${state.tacticalTab === tab ? 'active' : ''}" data-tactical-tab="${tab}">${tab}</button>`).join('')}</div><div class="lab-grid"><article class="panel lab-chart"><div class="panel-header"><div><p class="eyebrow">${state.tacticalTab.toUpperCase()}</p><h2>${state.tacticalTab === 'Passing network' ? 'The left side is the live wire.' : state.tacticalTab === 'Pressing intensity' ? 'Pressure arrives in waves.' : 'Shots came before the window closed.'}</h2></div><span class="chart-badge">SYNTHETIC / 68:42</span></div>${state.tacticalTab === 'Passing network' ? `<svg class="lab-svg network-svg" viewBox="0 0 700 260"><path d="M70 170 Q170 50 350 130 T625 80M70 170 Q250 220 350 130 T625 80M180 65 Q350 130 520 205M180 65 L350 130 L520 205" fill="none" stroke="#79c9ff" stroke-opacity=".35" stroke-width="2" stroke-dasharray="5 6"/><circle cx="70" cy="170" r="18" fill="#a1ffc7"/><circle cx="180" cy="65" r="14" fill="#79c9ff"/><circle cx="350" cy="130" r="21" fill="#a1ffc7"/><circle cx="520" cy="205" r="14" fill="#79c9ff"/><circle cx="625" cy="80" r="17" fill="#f6a37b"/><text x="48" y="210">OKAFOR</text><text x="155" y="42">ALVAREZ</text><text x="321" y="170">MEDINA</text><text x="494" y="240">SILVA</text><text x="600" y="55">WIDE</text></svg>` : state.tacticalTab === 'Pressing intensity' ? `<svg class="lab-svg" viewBox="0 0 700 260"><path d="M20 210 C85 205 90 90 150 130 S210 225 270 150 S340 65 400 125 S465 220 520 100 S610 55 680 75" fill="none" stroke="#a1ffc7" stroke-width="5"/><path d="M20 210 C85 205 90 90 150 130 S210 225 270 150 S340 65 400 125 S465 220 520 100 S610 55 680 75 L680 250 L20 250Z" fill="#a1ffc7" fill-opacity=".08"/><line x1="20" y1="210" x2="680" y2="210" stroke="#829e97" stroke-opacity=".2"/><line x1="20" y1="130" x2="680" y2="130" stroke="#829e97" stroke-opacity=".2"/><text x="25" y="246">50'</text><text x="325" y="246">60'</text><text x="640" y="246">68'</text></svg>` : `<svg class="lab-svg shot-svg" viewBox="0 0 700 260"><rect x="40" y="25" width="620" height="210" rx="10" fill="#11352d" stroke="#a9e6bf" stroke-opacity=".35"/><path d="M350 25v210M40 75h70v110H40M660 75h-70v110h70" fill="none" stroke="#a9e6bf" stroke-opacity=".4"/><circle cx="520" cy="100" r="12" fill="#a1ffc7"/><circle cx="475" cy="125" r="9" fill="#79c9ff"/><circle cx="560" cy="150" r="7" fill="#f6a37b"/><circle cx="405" cy="155" r="6" fill="#79c9ff"/><text x="500" y="80">0.18 xG</text></svg>`}<div class="lab-insight"><span>${icons.bolt}</span><p><b>AI reading:</b> ${state.tacticalTab === 'Passing network' ? 'Medina is the connector between the first pressure escape and the final-third entry.' : state.tacticalTab === 'Pressing intensity' ? 'The strongest wave follows a turnover, not a restart — evidence of reactive control.' : 'Three shots arrived from the right half-space; only one beat the closing angle.'}</p></div></article><article class="panel lab-metrics"><p class="eyebrow">MATCH LENS</p><div class="lab-metric"><span>NETWORK CENTRALITY</span><strong>0.68</strong><small>Medina · +21% vs team avg.</small></div><div class="lab-metric"><span>PRESS RECOVERIES</span><strong>11</strong><small>6 in attacking third</small></div><div class="lab-metric"><span>SHOT QUALITY</span><strong>0.74 xG</strong><small>3 shots · 2 on target</small></div><div class="lab-note">${icons.target} Pattern evidence is visible beside every chart, not hidden behind a model label.</div></article></div></section>
+
+        <section class="ask-section" id="ask"><div class="section-heading"><div><p class="eyebrow">ASK THE MATCH / GROUNDED CHAT</p><h2>Ask why. Get the evidence.</h2></div><p>A match-aware chat agent answers only from the synthetic event stream and cites the timestamps that support each answer.</p></div><div class="ask-grid"><article class="panel ask-panel"><div class="ask-head"><span class="ask-status"><i></i> grounded agent online</span><span>MOCK MODE · no API key required</span></div><div class="chat-messages">${state.askMessages.length ? state.askMessages.map(message => `<div class="chat-message ${message.role}"><span>${message.role === 'user' ? 'YOU' : 'MATCHMIND'}</span><p>${message.text}</p>${message.citations ? `<div class="citations">${message.citations.map(citation => `<button data-citation="${citation}">↗ ${citation}</button>`).join('')}</div>` : ''}</div>`).join('') : `<div class="chat-empty"><span>${icons.target}</span><strong>What do you want to know?</strong><p>Try a suggested question or ask in your own words.</p></div>`}</div><div class="suggested-questions">${['Why did the press fail after the 60th minute?', 'Who changed the match?', 'How did Atlético gain control?'].map(question => `<button data-question="${question}">${question}</button>`).join('')}</div><form class="ask-form" id="ask-form"><input id="ask-input" value="${state.askQuery}" placeholder="Ask about the match…" aria-label="Ask the match" /><button class="primary-btn" type="submit">Ask <span>↗</span></button></form></article><article class="panel grounding-panel"><p class="eyebrow">GROUNDING CONTRACT</p><h2>No invented stats.</h2><div class="grounding-rule"><span>01</span><p><b>Retrieve</b> linked events from the match envelope.</p></div><div class="grounding-rule"><span>02</span><p><b>Reason</b> over patterns already detected in the feed.</p></div><div class="grounding-rule"><span>03</span><p><b>Cite</b> every answer with match-clock evidence.</p></div><div class="grounding-footer">${icons.activity}<span>12 evidence events available</span></div></article></div></section>
+
+        <section class="impact-section" id="impact"><div class="section-heading"><div><p class="eyebrow">IMPACT / WHO BENEFITS</p><h2>More people can read the game.</h2></div><p>MatchMind makes advanced football intelligence useful without assuming everyone watches, speaks, or analyzes the game in the same way.</p></div><div class="impact-grid">${[['01', 'Fans', 'Plain-language explanations turn a fast match into a story anyone can follow.'], ['02', 'Broadcasters', 'Verified lines, overlays, and 60-second scripts reduce the distance from event to air.'], ['03', 'Accessibility users', 'Multilingual, low-jargon narrative gives more viewers an equal way into the match.'], ['04', 'Emerging markets', 'A provider-neutral event contract makes local data and local language a first-class path.']].map(item => `<article class="panel impact-card"><span>${item[0]}</span><h3>${item[1]}</h3><p>${item[2]}</p></article>`).join('')}</div><div class="roadmap panel"><div><p class="eyebrow">ROADMAP / NEXT 3 BUILDS</p><h2>From demo to matchday infrastructure.</h2></div><div class="roadmap-items"><span><b>01</b> Live provider adapters</span><span><b>02</b> Azure AI evaluation loop</span><span><b>03</b> Saved clubs, notes, and recaps</span></div></div></section>
+
         <section class="catalog-section" id="catalog"><div class="section-heading"><div><p class="eyebrow">TACTICAL CATALOGUE / PATTERN LIBRARY</p><h2>Search the match for patterns.</h2></div><p>Turn a live moment into a reusable tactical reference. Search by team, pattern, or the question you want to ask next.</p></div><div class="catalog-toolbar"><label class="catalog-search">${icons.target}<input id="catalog-search" value="${state.catalogQuery}" placeholder="Search patterns, phases, or players…" aria-label="Search tactical catalogue" /></label><div class="catalog-filters">${['All', 'Pressing wave', 'Build-up pattern', 'Territory pattern', 'Game-state pattern'].map(filter => `<button class="${state.catalogFilter === filter ? 'active' : ''}" data-catalog-filter="${filter}">${filter}</button>`).join('')}</div></div><div class="catalog-grid">${catalogItems.length ? catalogItems.map(item => `<button class="panel catalog-card ${item.color}" data-catalog-card="${item.title}"><div class="catalog-card-top"><span class="catalog-type">${item.type}</span><span>${item.count} ${icons.chevron}</span></div><h3>${item.title}</h3><p>${item.summary}</p><div class="catalog-tags">${item.tags.map(tag => `<span>${tag}</span>`).join('')}</div></button>`).join('') : '<div class="panel empty-catalog">No matching tactical patterns. Try “pressure” or “possession”.</div>'}</div></section>
 
         <section class="reasoning-section"><div class="section-heading"><div><p class="eyebrow">EXPLAINABILITY / AUDIT TRAIL</p><h2>Every claim has a trail.</h2></div><p>Before a sentence reaches the viewer, MatchMind checks the event, its links, its pattern, and the numbers inside the draft.</p></div><div class="reasoning-steps">${['Event ingestion', 'Data audit', 'Pattern detection', 'Evidence retrieval', 'Explanation', 'Claim verification'].map((step, index) => `<div class="reasoning-step"><span>0${index + 1}</span><strong>${step}</strong><small>${['Read and normalize the incoming event envelope.', 'Validate ids, teams, players, locations, and links.', 'Scan for pressing waves, counterattacks, spells, and turnovers.', 'Retrieve the supporting events that the explanation rests on.', 'Compose the selected persona’s answer from retrieved evidence.', 'Re-read every number and citation against the source dataset.'][index]}</small></div>`).join('')}</div></section>
@@ -278,6 +326,7 @@ function render() {
   `;
   bindInteractions();
   bindScrollMotion();
+  mountTechText(document.querySelector('#tech-text-mount'), { text: 'MATCHMIND', fontSize: 58, accentColor: '#a1ffc7' });
 }
 
 function bindInteractions() {
@@ -327,6 +376,16 @@ function bindInteractions() {
     render();
     window.setTimeout(() => { state.toast = ''; render(); }, 2600);
   });
+  document.querySelector('#guided-demo')?.addEventListener('click', () => { state.guidedDemo = true; state.demoStep = 0; render(); });
+  document.querySelector('#demo-close')?.addEventListener('click', () => { state.guidedDemo = false; render(); });
+  document.querySelector('#demo-next')?.addEventListener('click', () => { if (state.demoStep >= demoSteps().length - 1) { state.guidedDemo = false; state.toast = 'Guided demo complete — explore any surface to continue.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2600); return; } state.demoStep += 1; render(); document.querySelector(demoSteps()[state.demoStep].target)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  document.querySelectorAll('[data-recap-tab]').forEach(button => button.addEventListener('click', () => { state.recapTab = button.dataset.recapTab; render(); }));
+  document.querySelector('#copy-recap')?.addEventListener('click', async () => { const output = recapOutputs[state.recapTab]; try { await navigator.clipboard?.writeText(`${output.title}\n\n${output.body}`); } catch {} state.toast = 'Recap output copied to clipboard.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); });
+  document.querySelector('#export-recap')?.addEventListener('click', () => { const output = recapOutputs[state.recapTab]; const blob = new Blob([`${output.title}\n\n${output.body}`], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `matchmind-${state.recapTab.toLowerCase().replaceAll(' ', '-')}.txt`; link.click(); URL.revokeObjectURL(url); });
+  document.querySelectorAll('[data-tactical-tab]').forEach(button => button.addEventListener('click', () => { state.tacticalTab = button.dataset.tacticalTab; render(); }));
+  document.querySelectorAll('[data-question]').forEach(button => button.addEventListener('click', () => { state.askQuery = button.dataset.question; const input = document.querySelector('#ask-input'); if (input) { input.value = state.askQuery; input.focus(); } }));
+  document.querySelector('#ask-form')?.addEventListener('submit', event => { event.preventDefault(); const input = document.querySelector('#ask-input'); const query = input?.value.trim(); if (!query) return; const result = askAnswer(query); state.askQuery = ''; state.askMessages = [...state.askMessages, { role: 'user', text: query }, { role: 'agent', text: result.answer, citations: result.citations }]; render(); document.querySelector('#ask-input')?.focus(); });
+  document.querySelectorAll('[data-citation]').forEach(button => button.addEventListener('click', () => { const event = events.find(item => item.time === button.dataset.citation); if (event) { state.selectedEvent = event.id; render(); document.querySelector('#live')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
 }
 
 render();
