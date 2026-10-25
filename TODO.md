@@ -11,3 +11,4 @@
 - [ ] **Multi-language storytelling:** support clear natural-language outputs in multiple languages for global studio and streaming scenarios.
 - [ ] **Responsive product experience:** keep the dashboard readable and interactive across desktop and mobile layouts, with coherent synthetic football-realistic data and coordinated simulation updates.
 - [x] **Historical match context:** use synthetic previous-match data to calculate recent form, points, average possession, pass accuracy, shots, expected goals, pressure recoveries, distance covered, and selectable match-level comparisons.
+- [x] **Agentic implementation trace:** expose a transparent five-stage Ingest → Interpret → Explain → Render → Personalize pipeline, deterministic synthetic event envelope, evidence-backed rationale, counterfactual explanation, and connector-ready integration contract for managed narrative agents, event lakehouse, MCP tools, and durable APIs.
