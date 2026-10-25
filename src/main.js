@@ -3,6 +3,7 @@ import './history.css';
 import './agent.css';
 import './counterfactual.css';
 import './reference-features.css';
+import './scroll-motion.css';
 import { pipelineStages, syntheticEventSchema, runAgentTrace } from './pipeline.js';
 
 const icons = {
@@ -137,6 +138,42 @@ function playerInitials(name) {
   return name.split(' ').map(part => part[0]).join('').replace('.', '').slice(0, 2);
 }
 
+let scrollMotionBound = false;
+
+function bindScrollMotion() {
+  const revealItems = document.querySelectorAll('.panel, .section-heading, .status-strip, .intro-section, .footer');
+  revealItems.forEach((item, index) => {
+    item.classList.add('scroll-reveal');
+    item.style.setProperty('--reveal-delay', `${Math.min(index % 5, 4) * 55}ms`);
+  });
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    }), { threshold: 0.08, rootMargin: '0px 0px -24px' });
+    revealItems.forEach(item => observer.observe(item));
+  } else revealItems.forEach(item => item.classList.add('is-visible'));
+
+  const updateFootball = () => {
+    const ball = document.querySelector('.scroll-ball');
+    const orbit = document.querySelector('.scroll-orbit');
+    if (!ball || !orbit) return;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+    ball.style.transform = `translateY(${(progress - 0.5) * 320}px) rotate(${progress * 540}deg)`;
+    orbit.style.setProperty('--scroll-progress', progress);
+    orbit.classList.toggle('at-end', progress > .94);
+  };
+  updateFootball();
+  if (!scrollMotionBound) {
+    window.addEventListener('scroll', updateFootball, { passive: true });
+    window.addEventListener('resize', updateFootball);
+    scrollMotionBound = true;
+  }
+}
+
 function render() {
   const selected = events.find(event => event.id === state.selectedEvent) || events[0];
   const narrative = narratives[state.language];
@@ -153,6 +190,7 @@ function render() {
 
   document.querySelector('#app').innerHTML = `
     <div class="app-shell ${casual ? 'casual-mode' : ''}">
+      <div class="scroll-orbit" aria-hidden="true"><span class="orbit-line"></span><span class="scroll-ball"><i></i><b></b><em></em></span><small>SCROLL / EXPLORE</small></div>
       <header class="topbar">
         <a class="brand" href="#top" aria-label="MatchMind home"><span class="brand-mark"><i></i><i></i><i></i></span><span>match<span>mind</span></span></a>
         <nav class="topnav"><a class="active" href="#live">Live room</a><a href="#narrative">Narrative studio</a><a href="#data">Data lab</a><a href="#architecture">System</a></nav>
@@ -239,6 +277,7 @@ function render() {
     </div>
   `;
   bindInteractions();
+  bindScrollMotion();
 }
 
 function bindInteractions() {
