@@ -10,3 +10,4 @@
 - [ ] **Narrative generation:** generate key narratives, player-performance context, notable milestones, and a full match recap.
 - [ ] **Multi-language storytelling:** support clear natural-language outputs in multiple languages for global studio and streaming scenarios.
 - [ ] **Responsive product experience:** keep the dashboard readable and interactive across desktop and mobile layouts, with coherent synthetic football-realistic data and coordinated simulation updates.
+- [x] **Historical match context:** use synthetic previous-match data to calculate recent form, points, average possession, pass accuracy, shots, expected goals, pressure recoveries, distance covered, and selectable match-level comparisons.

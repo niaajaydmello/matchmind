@@ -1,0 +1,30 @@
+.history-section { margin-top: 83px; }
+.history-grid { display: grid; grid-template-columns: 1.3fr .9fr; gap: 18px; }
+.history-overview, .matches-panel { padding: 25px; }
+.history-select { position: relative; display: flex; align-items: center; gap: 8px; color: var(--mint); }
+.history-select span { color: #76948e; font: 500 9px var(--mono); letter-spacing: .08em; }
+.history-select select { color: var(--mint); border: 0; border-bottom: 1px solid rgba(161,255,199,.35); appearance: none; background: transparent; outline: 0; padding: 0 16px 5px 0; font: 500 10px var(--mono); cursor: pointer; }
+.history-select svg { position: absolute; right: 2px; bottom: 6px; width: 11px; fill: none; stroke: var(--mint); stroke-width: 1.5; pointer-events: none; }
+.history-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 22px; }
+.history-kpis > div { min-height: 102px; padding: 13px; background: rgba(4,22,29,.45); border: 1px solid var(--line); border-radius: 4px; }
+.history-kpis small { display: block; color: #76948e; font: 500 9px var(--mono); letter-spacing: .08em; }
+.history-kpis strong { display: block; color: #e9f6ef; font-size: 22px; letter-spacing: -.06em; margin: 12px 0 4px; }
+.history-kpis strong b { color: #8fa9a4; font: 500 11px var(--mono); letter-spacing: 0; margin-left: 2px; }
+.history-kpis span { color: #77938d; font: 9px var(--mono); }
+.history-bars { margin-top: 22px; padding-top: 17px; border-top: 1px solid var(--line); }
+.bar-row { display: grid; grid-template-columns: 120px 1fr 52px; align-items: center; gap: 10px; margin: 12px 0; color: #91aaa5; font: 10px var(--mono); }
+.bar-row > div { height: 5px; background: #203b40; border-radius: 8px; overflow: hidden; }
+.bar-row i { display: block; height: 100%; border-radius: inherit; background: var(--mint); }
+.bar-row i.blue-fill { background: var(--blue); }.bar-row i.orange-fill { background: var(--orange); }
+.bar-row strong { color: #d5e7df; font: 500 10px var(--mono); text-align: right; }
+.sample-label { color: var(--mint-2); font: 500 9px var(--mono); }.sample-label svg { width: 12px; height: 12px; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.match-table { margin-top: 20px; border-top: 1px solid var(--line); }
+.match-table-head, .match-table-row { display: grid; grid-template-columns: 54px minmax(100px, 1fr) 78px 42px 48px; gap: 8px; align-items: center; }
+.match-table-head { padding: 11px 5px 8px; color: #63817c; font: 500 8px var(--mono); letter-spacing: .08em; }
+.match-table-row { width: 100%; padding: 12px 5px; border: 0; border-bottom: 1px solid rgba(184,223,207,.08); background: transparent; color: #abc0bb; text-align: left; font: 10px var(--mono); }
+.match-table-row:hover, .match-table-row.selected { background: rgba(161,255,199,.05); }.match-table-row.selected { border-left: 2px solid var(--mint); padding-left: 3px; }
+.match-table-row span:nth-child(2) { color: #d9e8e1; font-family: 'Manrope',sans-serif; font-size: 10px; }.match-table-row span:nth-child(2) b { display: inline-grid; place-items: center; width: 16px; height: 16px; margin-right: 5px; border: 1px solid var(--line); border-radius: 3px; color: #8da9a1; font: 8px var(--mono); }
+.form-pill { display: inline-grid; place-items: center; width: 19px; height: 19px; border-radius: 4px; font: 500 9px var(--mono); }.form-pill.win { color: var(--mint); background: rgba(161,255,199,.12); }.form-pill.draw { color: #ffe3a0; background: rgba(255,227,160,.1); }.form-pill.loss { color: var(--orange); background: rgba(246,163,123,.1); }.match-table-row em { color: #75928c; font-style: normal; font-size: 9px; margin-left: 3px; }
+.history-note { display: flex; gap: 8px; align-items: flex-start; margin-top: 17px; padding: 11px; border: 1px solid rgba(161,255,199,.14); background: rgba(161,255,199,.045); color: #a8c2b9; font-size: 10px; line-height: 1.5; }.history-note span { color: var(--mint); }.history-note svg { width: 13px; fill: none; stroke: currentColor; stroke-width: 1.7; }.history-note p { margin: 0; }.history-note b { color: var(--mint); }
+@media (max-width: 1100px) { .history-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .history-section { margin-top: 60px; }.history-overview, .matches-panel { padding: 18px 15px; }.history-kpis { grid-template-columns: repeat(2, 1fr); }.history-select { margin-top: 10px; }.history-overview .panel-header { display: block; }.bar-row { grid-template-columns: 105px 1fr 45px; font-size: 9px; }.match-table-head, .match-table-row { grid-template-columns: 47px minmax(92px,1fr) 54px 37px; }.match-table-head span:nth-child(5), .match-table-row span:nth-child(5) { display: none; } }

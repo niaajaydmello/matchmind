@@ -1,4 +1,5 @@
 import './style.css';
+import './history.css';
 
 const icons = {
   activity: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
@@ -23,6 +24,7 @@ const state = {
   mode: 'analyst',
   language: 'English',
   focusPlayer: 'L. Medina',
+  historyMatch: 'all',
   isLive: true,
   elapsed: 68 * 60 + 42,
   selectedEvent: 'pressure',
@@ -38,6 +40,39 @@ const events = [
   { id: 'possession', time: '59:44', type: 'POSSESSION', icon: 'activity', tone: 'purple', title: 'Momentum tilted right', player: 'Atlético Norte', detail: 'Five consecutive possessions ended in the attacking third over 2:18.', metric: '+12% control', why: 'Sustained territory, rather than a single pass, explains the shift in match control.' },
   { id: 'tackle', time: '54:29', type: 'TACKLE', icon: 'crosshair', tone: 'pink', title: 'Last-ditch recovery', player: 'M. Okafor', detail: 'Recovered 0.8s after the ball entered the danger zone, stopping a 3v2.', metric: '0.8s reaction', why: 'The timing prevented a numerical disadvantage from becoming a clear chance.' }
 ];
+
+// Synthetic previous-match feed used to give the live intelligence historical context.
+const previousMatches = [
+  { id: 'm05', date: '18 May', opponent: 'CD Levante', venue: 'H', result: 'W', score: '2–0', possession: 58, shots: 14, shotsOnTarget: 6, passAccuracy: 89, passes: 512, pressureRecoveries: 11, xg: 1.84, distance: 108.4, topPlayer: 'L. Medina', topRating: 8.7 },
+  { id: 'm04', date: '11 May', opponent: 'Unión Costa', venue: 'A', result: 'D', score: '1–1', possession: 54, shots: 11, shotsOnTarget: 4, passAccuracy: 86, passes: 466, pressureRecoveries: 8, xg: 1.21, distance: 106.1, topPlayer: 'J. Alvarez', topRating: 7.9 },
+  { id: 'm03', date: '04 May', opponent: 'Real Sierra', venue: 'H', result: 'W', score: '3–1', possession: 62, shots: 18, shotsOnTarget: 8, passAccuracy: 91, passes: 588, pressureRecoveries: 14, xg: 2.38, distance: 111.2, topPlayer: 'R. Silva', topRating: 9.1 },
+  { id: 'm02', date: '27 Apr', opponent: 'Atlético Sur', venue: 'A', result: 'L', score: '0–1', possession: 49, shots: 9, shotsOnTarget: 2, passAccuracy: 82, passes: 401, pressureRecoveries: 6, xg: 0.73, distance: 103.7, topPlayer: 'M. Okafor', topRating: 7.4 },
+  { id: 'm01', date: '20 Apr', opponent: 'Racing Verde', venue: 'H', result: 'W', score: '2–1', possession: 56, shots: 13, shotsOnTarget: 5, passAccuracy: 88, passes: 493, pressureRecoveries: 10, xg: 1.67, distance: 109.6, topPlayer: 'L. Medina', topRating: 8.5 }
+];
+
+function historyRows() {
+  return state.historyMatch === 'all' ? previousMatches : previousMatches.filter(match => match.id === state.historyMatch);
+}
+
+function historicalStats() {
+  const rows = historyRows();
+  const total = rows.length || 1;
+  const wins = rows.filter(match => match.result === 'W').length;
+  return {
+    record: `${wins}–${rows.filter(match => match.result === 'D').length}–${rows.filter(match => match.result === 'L').length}`,
+    points: `${wins * 3 + rows.filter(match => match.result === 'D').length}/${total * 3}`,
+    possession: Math.round(rows.reduce((sum, match) => sum + match.possession, 0) / total),
+    passAccuracy: Math.round(rows.reduce((sum, match) => sum + match.passAccuracy, 0) / total),
+    shots: (rows.reduce((sum, match) => sum + match.shots, 0) / total).toFixed(1),
+    xg: (rows.reduce((sum, match) => sum + match.xg, 0) / total).toFixed(2),
+    pressure: (rows.reduce((sum, match) => sum + match.pressureRecoveries, 0) / total).toFixed(1),
+    distance: (rows.reduce((sum, match) => sum + match.distance, 0) / total).toFixed(1)
+  };
+}
+
+function formPill(result) {
+  return `<span class="form-pill ${result === 'W' ? 'win' : result === 'D' ? 'draw' : 'loss'}">${result}</span>`;
+}
 
 const narratives = {
   English: {
@@ -81,6 +116,8 @@ function render() {
   const selected = events.find(event => event.id === state.selectedEvent) || events[0];
   const narrative = narratives[state.language];
   const casual = state.mode === 'casual';
+  const history = historicalStats();
+  const historyLabel = state.historyMatch === 'all' ? 'Last 5 matches' : previousMatches.find(match => match.id === state.historyMatch)?.opponent || 'Selected match';
   const players = [
     { name: 'L. Medina', role: 'Attacking midfielder', stat: '8.4', sub: 'match impact', color: 'mint', active: state.focusPlayer === 'L. Medina' },
     { name: 'J. Alvarez', role: 'Deep playmaker', stat: '91%', sub: 'pass accuracy', color: 'blue', active: state.focusPlayer === 'J. Alvarez' },
@@ -160,6 +197,8 @@ function render() {
           <article class="panel player-panel"><div class="panel-header"><div><p class="eyebrow">PLAYER FOCUS</p><h2>${state.focusPlayer}</h2></div><label class="player-select"><select id="player-select" aria-label="Focus player"><option ${state.focusPlayer === 'L. Medina' ? 'selected' : ''}>L. Medina</option><option ${state.focusPlayer === 'J. Alvarez' ? 'selected' : ''}>J. Alvarez</option><option ${state.focusPlayer === 'M. Okafor' ? 'selected' : ''}>M. Okafor</option></select>${icons.chevron}</label></div><div class="player-hero"><div class="player-avatar ${state.focusPlayer === 'J. Alvarez' ? 'blue' : state.focusPlayer === 'M. Okafor' ? 'orange' : 'mint'}">${playerInitials(state.focusPlayer)}</div><div><strong>${state.focusPlayer}</strong><span>${players.find(p => p.name === state.focusPlayer)?.role}</span></div><span class="focus-badge">${icons.star} focused</span></div><div class="player-stats"><div><small>IMPACT</small><strong>${state.focusPlayer === 'L. Medina' ? '8.4' : state.focusPlayer === 'J. Alvarez' ? '7.9' : '7.6'}</strong><span>/ 10</span></div><div><small>INVOLVEMENT</small><strong>${state.focusPlayer === 'L. Medina' ? '42' : state.focusPlayer === 'J. Alvarez' ? '58' : '29'}</strong><span>touches</span></div><div><small>KEY ACTIONS</small><strong>${state.focusPlayer === 'L. Medina' ? '6' : state.focusPlayer === 'J. Alvarez' ? '8' : '7'}</strong><span>this half</span></div></div><div class="player-reading"><span class="reading-line"></span><div><small>PLAIN-LANGUAGE READING</small><p>${state.focusPlayer === 'L. Medina' ? 'Medina is finding the gap between the fullback and centre-back. His pressure triggers have directly shaped Atlético Norte’s best attacks.' : state.focusPlayer === 'J. Alvarez' ? 'Alvarez is keeping the game moving. His first-time passing is helping Atlético Norte play through pressure instead of around it.' : 'Okafor is protecting the lead with anticipation. His recoveries arrive before the danger becomes a chance.'}</p></div></div><div class="focus-toggle"><span>Keep focus on ${state.focusPlayer} throughout match</span><button class="toggle on" aria-label="Player focus enabled"><i></i></button></div></article>
         </section>
 
+        <section class="history-section" id="history"><div class="section-heading"><div><p class="eyebrow">MATCH ARCHIVE / SYNTHETIC DATASET</p><h2>Form becomes context.</h2></div><p>Historical event data gives the live story a baseline: what is normal for Atlético Norte, and what is changing tonight?</p></div><div class="history-grid"><article class="panel history-overview"><div class="panel-header"><div><p class="eyebrow">ATLÉTICO NORTE / ${historyLabel.toUpperCase()}</p><h2>Previous match intelligence</h2></div><label class="history-select"><span>COMPARE</span><select id="history-select" aria-label="Choose historical match"><option value="all" ${state.historyMatch === 'all' ? 'selected' : ''}>Last 5 matches</option>${previousMatches.map(match => `<option value="${match.id}" ${state.historyMatch === match.id ? 'selected' : ''}>${match.date} · ${match.opponent}</option>`).join('')}</select>${icons.chevron}</label></div><div class="history-kpis"><div><small>FORM</small><strong>${history.record}</strong><span>${history.points} points</span></div><div><small>AVG POSSESSION</small><strong>${history.possession}<b>%</b></strong><span>${history.possession >= 55 ? 'above' : 'below'} league median</span></div><div><small>PASS ACCURACY</small><strong>${history.passAccuracy}<b>%</b></strong><span>${history.passAccuracy >= 87 ? 'clean circulation' : 'room to improve'}</span></div><div><small>AVG xG</small><strong>${history.xg}</strong><span>per match</span></div></div><div class="history-bars"><div class="bar-row"><span>Pressure recoveries</span><div><i style="width:${Math.min(100, Number(history.pressure) * 5.5)}%"></i></div><strong>${history.pressure}</strong></div><div class="bar-row"><span>Shots per match</span><div><i class="blue-fill" style="width:${Math.min(100, Number(history.shots) * 5)}%"></i></div><strong>${history.shots}</strong></div><div class="bar-row"><span>Distance covered</span><div><i class="orange-fill" style="width:${Math.min(100, Number(history.distance) - 70)}%"></i></div><strong>${history.distance} km</strong></div></div></article><article class="panel matches-panel"><div class="panel-header"><div><p class="eyebrow">RECENT RESULTS</p><h2>Five-match form</h2></div><span class="sample-label">${icons.activity} sample data</span></div><div class="match-table"><div class="match-table-head"><span>DATE</span><span>OPPONENT</span><span>RESULT</span><span>POS</span><span>PASS</span></div>${previousMatches.map(match => `<button class="match-table-row ${state.historyMatch === match.id ? 'selected' : ''}" data-history="${match.id}"><span>${match.date}</span><span><b>${match.venue}</b> ${match.opponent}</span><span>${formPill(match.result)} <em>${match.score}</em></span><span>${match.possession}%</span><span>${match.passAccuracy}%</span></button>`).join('')}</div><div class="history-note"><span>${icons.bolt}</span><p><b>Pattern detected:</b> ${history.possession >= 55 ? 'possession and pressure rise together in Atlético Norte wins.' : 'the selected match shows a lower-control game state than the recent baseline.'}</p></div></article></div></section>
+
         <section class="narrative-section" id="narrative"><div class="section-heading"><div><p class="eyebrow">NARRATIVE STUDIO / GENERATIVE STORYTELLING</p><h2>One match. Your way in.</h2></div><p>MatchMind adapts the same underlying intelligence to the person watching — from tactical depth to a clean, human story.</p></div><div class="narrative-grid"><article class="panel story-panel"><div class="story-top"><div class="mode-tabs"><button class="${state.mode === 'analyst' ? 'active' : ''}" data-mode="analyst">Analyst mode</button><button class="${state.mode === 'casual' ? 'active' : ''}" data-mode="casual">Casual fan mode</button></div><span class="generated-label">${icons.activity} generated live</span></div><div class="story-body"><span class="quote-mark">“</span><p class="story-quote">${state.mode === 'analyst' ? narrative.analyst : narrative.casual}</p><div class="story-tags"><span>pressure context</span><span>player-aware</span><span>plain language</span></div></div><div class="story-footer"><span>${icons.clock} Updated after 68:41</span><button class="text-btn" id="more-story">Expand story ${icons.arrowUp}</button></div></article><article class="panel modes-panel"><div class="panel-header"><div><p class="eyebrow">YOUR MATCH / PREFERENCES</p><h2>Make it yours</h2></div>${icons.settings}</div><div class="preference-row"><div class="preference-icon mint">${icons.star}</div><div><strong>Favorite club</strong><small>Prioritize their key moments</small></div><span class="preference-value">Atlético Norte ${icons.chevron}</span></div><div class="preference-row"><div class="preference-icon blue">${icons.target}</div><div><strong>Player focus</strong><small>Follow one player all match</small></div><span class="preference-value">${state.focusPlayer} ${icons.chevron}</span></div><div class="preference-row"><div class="preference-icon orange">${icons.globe}</div><div><strong>Story language</strong><small>Natural-language output</small></div><span class="preference-value">${state.language} ${icons.chevron}</span></div><button class="manage-btn">Manage viewing experience <span>↗</span></button></article></div></section>
       </main>
       <footer class="footer"><div class="brand footer-brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>match<span>mind</span></span></div><span>Explainable intelligence for every football story.</span><span class="footer-right">Synthetic data environment · v0.9.4</span></footer>
@@ -179,6 +218,15 @@ function bindInteractions() {
     state.mode = button.dataset.mode;
     render();
   }));
+  document.querySelectorAll('[data-history]').forEach(button => button.addEventListener('click', () => {
+    state.historyMatch = button.dataset.history;
+    render();
+    document.querySelector('#history')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  document.querySelector('#history-select')?.addEventListener('change', event => {
+    state.historyMatch = event.target.value;
+    render();
+  });
   document.querySelector('#language-select')?.addEventListener('change', event => { state.language = event.target.value; render(); });
   document.querySelector('#player-select')?.addEventListener('change', event => { state.focusPlayer = event.target.value; render(); });
   document.querySelector('#generate-recap')?.addEventListener('click', () => {
