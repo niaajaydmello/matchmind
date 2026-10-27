@@ -232,3 +232,7 @@ The website now exposes each requested capability as a visible, judgeable produc
 | Deliver personalized experiences for studios, streaming platforms, and fans | Delivery Surfaces selector with Fan View, Studio Desk, and Streaming Platform payload previews |
 
 The demo remains intentionally deterministic and MOCK-mode. The visible seams are designed so a production implementation can replace the local event generator and answer functions with live tracking-provider adapters, Azure AI/GitHub Models, Fabric, Azure MCP, and durable Azure storage without changing the viewer-facing workflow.
+
+## Demo authentication
+
+MatchMind includes a lightweight login/sign-up experience for the demo workspace. A user can create a local demo account, keep a session in browser storage, log out, and unlock recap exports, dataset expansion, Auto-Highlight generation, and personalized delivery surfaces. The UI clearly labels this as demo authentication and does not store passwords. Production identity should replace this layer with Manus Authentication, Azure AD, or another server-backed identity provider.

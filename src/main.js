@@ -8,6 +8,7 @@ import './submission-features.css';
 import './requirements.css';
 import './tagline.css';
 import './language.css';
+import './auth.css';
 import { pipelineStages, syntheticEventSchema, runAgentTrace } from './pipeline.js';
 import { mountTechText } from './tech-text.js';
 
@@ -30,6 +31,10 @@ const icons = {
   target: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>'
 };
 
+const storedUser = (() => {
+  try { return typeof window !== 'undefined' ? JSON.parse(window.localStorage.getItem('matchmind-demo-user') || 'null') : null; } catch { return null; }
+})();
+
 const state = {
   mode: 'analyst',
   language: 'English',
@@ -49,6 +54,10 @@ const state = {
   highlightReady: false,
   datasetSize: 25,
   audience: 'Fan View',
+  authUser: storedUser,
+  authModal: false,
+  authMode: 'login',
+  authError: '',
   isLive: true,
   elapsed: 68 * 60 + 42,
   selectedEvent: 'pressure',
@@ -130,6 +139,25 @@ function demoSteps() {
     { title: 'Generate the story', copy: 'Switch output formats for a recap, script, or social post.', target: '#recap' },
     { title: 'Explore the impact', copy: 'See who the platform is designed to help.', target: '#impact' }
   ];
+}
+
+function openAuth(mode = 'login') {
+  state.authMode = mode;
+  state.authModal = true;
+  state.authError = '';
+  render();
+}
+
+function requireAuth(feature) {
+  if (state.authUser) return true;
+  state.authError = `Create a free demo account to use ${feature}.`;
+  openAuth('signup');
+  return false;
+}
+
+function persistUser(user) {
+  state.authUser = user;
+  try { window.localStorage.setItem('matchmind-demo-user', JSON.stringify(user)); } catch {}
 }
 
 const narratives = {
@@ -266,7 +294,7 @@ function render() {
           <span class="live-indicator"><span></span> Live sync</span>
           <button class="icon-btn" aria-label="Toggle sound">${icons.volume}</button>
           <label class="language-select">${icons.globe}<select id="language-select" aria-label="Language">${languageOptions.map(language => `<option ${state.language === language ? 'selected' : ''}>${language}</option>`).join('')}</select>${icons.chevron}</label>
-          <div class="avatar">AK</div>
+          <button class="account-button ${state.authUser ? 'signed-in' : ''}" id="auth-button" aria-label="${state.authUser ? 'Account status' : 'Login or sign up'}"><span class="avatar">${state.authUser ? playerInitials(state.authUser.name || 'Fan') : 'AK'}</span><span class="account-label">${state.authUser ? state.authUser.name : 'Login'}</span></button>${state.authUser ? '<button class="logout-button" id="logout-button">Log out</button>' : ''}
         </div>
       </header>
 
@@ -358,6 +386,7 @@ function render() {
       </main>
       <footer class="footer"><div class="brand footer-brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>match<span>mind</span></span></div><span>Explainable intelligence for every football story.</span><span class="footer-right">Synthetic data environment · v0.9.4</span></footer>
       ${state.toast ? `<div class="toast">${icons.activity}<span>${state.toast}</span></div>` : ''}
+      ${state.authModal ? `<div class="auth-backdrop" role="presentation"><section class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button class="auth-close" id="auth-close" aria-label="Close authentication dialog">×</button><span class="eyebrow">MATCHMIND ACCOUNT</span><h2 id="auth-title">${state.authMode === 'login' ? 'Welcome back.' : 'Create your match workspace.'}</h2><p class="auth-subtitle">${state.authError || 'Save recaps, expand datasets, and unlock studio-ready outputs.'}</p><div class="auth-tabs"><button class="${state.authMode === 'login' ? 'active' : ''}" data-auth-mode="login">Log in</button><button class="${state.authMode === 'signup' ? 'active' : ''}" data-auth-mode="signup">Sign up</button></div><form id="auth-form"><label>${state.authMode === 'signup' ? 'Name' : 'Email'}<input id="auth-identity" type="${state.authMode === 'signup' ? 'text' : 'email'}" placeholder="${state.authMode === 'signup' ? 'Your name' : 'you@example.com'}" required /></label>${state.authMode === 'signup' ? '<label>Email<input id="auth-email" type="email" placeholder="you@example.com" required /></label>' : ''}<label>Password<input id="auth-password" type="password" placeholder="At least 6 characters" minlength="6" required /></label><button class="primary-btn auth-submit" type="submit">${state.authMode === 'login' ? 'Log in to MatchMind' : 'Create demo account'} <span>↗</span></button></form><small class="auth-note">Demo authentication only — no password is stored. Production identity can connect to Manus Authentication or Azure AD.</small></section></div>` : ''}
     </div>
   `;
   bindInteractions();
@@ -416,16 +445,21 @@ function bindInteractions() {
   document.querySelector('#demo-close')?.addEventListener('click', () => { state.guidedDemo = false; render(); });
   document.querySelector('#demo-next')?.addEventListener('click', () => { if (state.demoStep >= demoSteps().length - 1) { state.guidedDemo = false; state.toast = 'Guided demo complete — explore any surface to continue.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2600); return; } state.demoStep += 1; render(); document.querySelector(demoSteps()[state.demoStep].target)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   document.querySelectorAll('[data-recap-tab]').forEach(button => button.addEventListener('click', () => { state.recapTab = button.dataset.recapTab; render(); }));
-  document.querySelector('#copy-recap')?.addEventListener('click', async () => { const output = recapOutputs[state.recapTab]; try { await navigator.clipboard?.writeText(`${output.title}\n\n${output.body}`); } catch {} state.toast = 'Recap output copied to clipboard.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); });
-  document.querySelector('#export-recap')?.addEventListener('click', () => { const output = recapOutputs[state.recapTab]; const blob = new Blob([`${output.title}\n\n${output.body}`], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `matchmind-${state.recapTab.toLowerCase().replaceAll(' ', '-')}.txt`; link.click(); URL.revokeObjectURL(url); });
   document.querySelectorAll('[data-tactical-tab]').forEach(button => button.addEventListener('click', () => { state.tacticalTab = button.dataset.tacticalTab; render(); }));
   document.querySelectorAll('[data-question]').forEach(button => button.addEventListener('click', () => { state.askQuery = button.dataset.question; const input = document.querySelector('#ask-input'); if (input) { input.value = state.askQuery; input.focus(); } }));
   document.querySelector('#ask-form')?.addEventListener('submit', event => { event.preventDefault(); const input = document.querySelector('#ask-input'); const query = input?.value.trim(); if (!query) return; const result = askAnswer(query); state.askQuery = ''; state.askMessages = [...state.askMessages, { role: 'user', text: query }, { role: 'agent', text: result.answer, citations: result.citations }]; render(); document.querySelector('#ask-input')?.focus(); });
   document.querySelectorAll('[data-citation]').forEach(button => button.addEventListener('click', () => { const event = events.find(item => item.time === button.dataset.citation); if (event) { state.selectedEvent = event.id; render(); document.querySelector('#live')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
-  document.querySelector('#generate-highlights')?.addEventListener('click', () => { state.highlightReady = true; state.toast = 'Highlight queue generated from event density, xT swing, and tactical value.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2600); });
   document.querySelectorAll('[data-highlight-time]').forEach(button => button.addEventListener('click', () => { const event = events.find(item => item.time === button.dataset.highlightTime); if (event) { state.selectedEvent = event.id; state.toast = `Jumped to ${button.dataset.highlightTime} — highlight evidence loaded.`; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); } }));
-  document.querySelector('#expand-dataset')?.addEventListener('click', () => { state.datasetSize += 5; state.toast = 'Five labelled football-realistic events added to the AI-ready dataset.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2400); });
-  document.querySelectorAll('[data-audience]').forEach(button => button.addEventListener('click', () => { state.audience = button.dataset.audience; render(); }));
+  document.querySelector('#auth-button')?.addEventListener('click', () => { if (state.authUser) { state.toast = `Signed in as ${state.authUser.name}.`; render(); } else openAuth('login'); });
+  document.querySelector('#logout-button')?.addEventListener('click', () => { state.authUser = null; try { window.localStorage.removeItem('matchmind-demo-user'); } catch {} state.toast = 'Signed out of the demo workspace.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); });
+  document.querySelector('#auth-close')?.addEventListener('click', () => { state.authModal = false; state.authError = ''; render(); });
+  document.querySelectorAll('[data-auth-mode]').forEach(button => button.addEventListener('click', () => openAuth(button.dataset.authMode)));
+  document.querySelector('#auth-form')?.addEventListener('submit', event => { event.preventDefault(); const identity = document.querySelector('#auth-identity')?.value.trim(); const email = document.querySelector('#auth-email')?.value.trim() || identity; const password = document.querySelector('#auth-password')?.value || ''; if (!identity || !email || password.length < 6) { state.authError = 'Please enter valid details and a password with at least 6 characters.'; render(); return; } const name = state.authMode === 'signup' ? identity : (identity.split('@')[0] || 'MatchMind fan'); persistUser({ name, email }); state.authModal = false; state.authError = ''; state.toast = `Welcome to MatchMind, ${name}.`; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2600); });
+  document.querySelector('#expand-dataset')?.addEventListener('click', () => { if (!requireAuth('Dataset Forge')) return; state.datasetSize += 5; state.toast = 'Five labelled football-realistic events added to the AI-ready dataset.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2400); });
+  document.querySelector('#generate-highlights')?.addEventListener('click', () => { if (!requireAuth('Auto-Highlight Agent')) return; state.highlightReady = true; state.toast = 'Highlight queue generated from event density, xT swing, and tactical value.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2600); });
+  document.querySelector('#copy-recap')?.addEventListener('click', async () => { if (!requireAuth('recap exports')) return; const output = recapOutputs[state.recapTab]; try { await navigator.clipboard?.writeText(`${output.title}\n\n${output.body}`); } catch {} state.toast = 'Recap output copied to clipboard.'; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); });
+  document.querySelector('#export-recap')?.addEventListener('click', () => { if (!requireAuth('recap exports')) return; const output = recapOutputs[state.recapTab]; const blob = new Blob([`${output.title}\n\n${output.body}`], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `matchmind-${state.recapTab.toLowerCase().replaceAll(' ', '-')}.txt`; link.click(); URL.revokeObjectURL(url); });
+  document.querySelectorAll('[data-audience]').forEach(button => button.addEventListener('click', () => { if (!requireAuth('personalized delivery surfaces')) return; state.audience = button.dataset.audience; render(); }));
 }
 
 render();
