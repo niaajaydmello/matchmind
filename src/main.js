@@ -7,6 +7,7 @@ import './scroll-motion.css';
 import './submission-features.css';
 import './requirements.css';
 import './tagline.css';
+import './language.css';
 import { pipelineStages, syntheticEventSchema, runAgentTrace } from './pipeline.js';
 import { mountTechText } from './tech-text.js';
 
@@ -155,6 +156,16 @@ const narratives = {
 
 const languageOptions = ['English', 'हिन्दी', 'Español', 'العربية', 'Português', 'Français', '普通话'];
 
+const uiCopy = {
+  English: { heroLine1: 'Make the moment', heroLine2: 'make sense.', tagline: 'Turn every football moment into a story.', intro: 'From event stream to explainable story — MatchMind helps every viewer understand what just changed, and why it matters.', translated: 'English experience active' },
+  हिन्दी: { heroLine1: 'हर पल को', heroLine2: 'समझने योग्य बनाएं।', tagline: 'हर फुटबॉल पल को एक कहानी में बदलें।', intro: 'इवेंट स्ट्रीम से समझने योग्य कहानी तक — MatchMind हर दर्शक को समझाता है कि अभी क्या बदला और क्यों महत्वपूर्ण है।', translated: 'हिन्दी अनुभव सक्रिय है' },
+  Español: { heroLine1: 'Haz que el momento', heroLine2: 'tenga sentido.', tagline: 'Convierte cada momento del fútbol en una historia.', intro: 'De la secuencia de eventos a una historia explicable — MatchMind ayuda a entender qué cambió y por qué importa.', translated: 'Experiencia en español activa' },
+  العربية: { heroLine1: 'اجعل اللحظة', heroLine2: 'مفهومة.', tagline: 'حوّل كل لحظة كروية إلى قصة.', intro: 'من تدفق الأحداث إلى قصة قابلة للفهم — يساعد MatchMind كل مشاهد على معرفة ما تغيّر ولماذا يهم.', translated: 'التجربة العربية مفعّلة' },
+  Português: { heroLine1: 'Faça o momento', heroLine2: 'fazer sentido.', tagline: 'Transforme cada momento do futebol em uma história.', intro: 'Do fluxo de eventos à história explicável — o MatchMind mostra o que mudou e por que isso importa.', translated: 'Experiência em português ativa' },
+  Français: { heroLine1: 'Donnez du sens', heroLine2: 'à chaque moment.', tagline: 'Transformez chaque moment de football en histoire.', intro: 'Du flux d’événements à une histoire explicable — MatchMind révèle ce qui vient de changer et pourquoi cela compte.', translated: 'Expérience française active' },
+  普通话: { heroLine1: '让每个瞬间', heroLine2: '变得清晰。', tagline: '把每个足球瞬间变成一个故事。', intro: '从实时事件流到可解释的故事，MatchMind 帮助每位观众理解刚刚发生了什么，以及为什么重要。', translated: '普通话体验已启用' }
+};
+
 const recapOutputs = {
   'Match report': { title: 'Atlético Norte 1–0 Real Bahía', body: 'Atlético Norte’s 9.2-second press turned a calm build-up into the match’s clearest attacking window. The home side finished the half with 61% control, 87% pass quality, and three recoveries inside ten seconds of an opponent’s first touch facing their own goal.', label: 'FULL MATCH REPORT' },
   '60-second script': { title: 'A match changed by pressure', body: '[0:00] Atlético Norte start fast. [0:18] Medina triggers the press and wins it high. [0:31] Alvarez breaks the next line. [0:44] Silva shoots before the angle closes. [0:60] The story of the half: not more possession, but better-timed pressure.', label: 'VOICEOVER SCRIPT' },
@@ -233,6 +244,7 @@ function bindScrollMotion() {
 function render() {
   const selected = events.find(event => event.id === state.selectedEvent) || events[0];
   const narrative = narratives[state.language];
+  const copy = uiCopy[state.language] || uiCopy.English;
   const casual = state.mode === 'casual';
   const history = historicalStats();
   const historyLabel = state.historyMatch === 'all' ? 'Last 5 matches' : previousMatches.find(match => match.id === state.historyMatch)?.opponent || 'Selected match';
@@ -262,9 +274,9 @@ function render() {
         <section class="intro-section">
           <div>
             <p class="eyebrow">MATCHMIND / ${state.isLive ? 'LIVE MATCH INTELLIGENCE' : 'MATCH ARCHIVE'}</p>
-            <h1>Make the moment<br /><em>make sense.</em></h1>
-            <p class="brand-tagline">Turn every football moment into a story.</p>
-            <p class="intro-copy">From event stream to explainable story — MatchMind helps every viewer understand what just changed, and why it matters.</p><div id="tech-text-mount" class="tech-text-mount"></div>
+            <h1>${copy.heroLine1}<br /><em>${copy.heroLine2}</em></h1>
+            <p class="brand-tagline">${copy.tagline}</p>
+            <p class="intro-copy">${copy.intro}</p><div class="language-active-note">${icons.globe}<span>${copy.translated}</span></div><div id="tech-text-mount" class="tech-text-mount"></div>
           </div>
           <div class="intro-actions">
             <button class="secondary-btn" id="refresh-sim">${icons.refresh}<span>Simulate next event</span></button>
@@ -379,7 +391,7 @@ function bindInteractions() {
   document.querySelectorAll('[data-catalog-filter]').forEach(button => button.addEventListener('click', () => { state.catalogFilter = button.dataset.catalogFilter; render(); }));
   document.querySelector('#catalog-search')?.addEventListener('input', event => { state.catalogQuery = event.target.value; render(); const search = document.querySelector('#catalog-search'); search?.focus(); search?.setSelectionRange(state.catalogQuery.length, state.catalogQuery.length); });
   document.querySelectorAll('[data-catalog-card]').forEach(button => button.addEventListener('click', () => { state.toast = `${button.dataset.catalogCard} opened as a tactical breakdown.`; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); }));
-  document.querySelector('#language-select')?.addEventListener('change', event => { state.language = event.target.value; render(); });
+  document.querySelector('#language-select')?.addEventListener('change', event => { state.language = event.target.value; state.toast = `${uiCopy[state.language]?.translated || state.language} — narrative and hero copy updated.`; render(); window.setTimeout(() => { state.toast = ''; render(); }, 2200); });
   document.querySelector('#player-select')?.addEventListener('change', event => { state.focusPlayer = event.target.value; render(); });
   document.querySelector('#generate-recap')?.addEventListener('click', () => {
     state.toast = 'Recap generated — 3 key moments and 1 player storyline ready.';
