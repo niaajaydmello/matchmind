@@ -1,0 +1,2 @@
+.brand-tagline { margin: 14px 0 0; color: var(--mint); font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+@media (max-width: 700px) { .brand-tagline { margin-top: 11px; font-size: 10px; line-height: 1.5; } }

@@ -6,6 +6,7 @@ import './reference-features.css';
 import './scroll-motion.css';
 import './submission-features.css';
 import './requirements.css';
+import './tagline.css';
 import { pipelineStages, syntheticEventSchema, runAgentTrace } from './pipeline.js';
 import { mountTechText } from './tech-text.js';
 
@@ -262,6 +263,7 @@ function render() {
           <div>
             <p class="eyebrow">MATCHMIND / ${state.isLive ? 'LIVE MATCH INTELLIGENCE' : 'MATCH ARCHIVE'}</p>
             <h1>Make the moment<br /><em>make sense.</em></h1>
+            <p class="brand-tagline">Turn every football moment into a story.</p>
             <p class="intro-copy">From event stream to explainable story — MatchMind helps every viewer understand what just changed, and why it matters.</p><div id="tech-text-mount" class="tech-text-mount"></div>
           </div>
           <div class="intro-actions">
