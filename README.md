@@ -217,3 +217,18 @@ The managed static publication contract uses `npm ci && npm run build` and publi
 3. Persist saved matches, notes, favourite clubs, recap exports, and language preferences in Azure database/Fabric-backed services.
 4. Add real passing-network and heatmap computation from complete event coordinates, plus video auto-eventing ingestion.
 5. Add authenticated workspaces and publisher controls for broadcaster and social teams.
+
+## AI solution requirement coverage
+
+The website now exposes each requested capability as a visible, judgeable product surface:
+
+| Requirement | Where it appears in the app |
+|---|---|
+| Analyze match events in real time | Live Match Center, simulated clock, live event feed, event envelope, replay controls, signal stack, and agent orchestration trace |
+| Generate stories, highlights, and recaps | Narrative Studio, Recap Studio, and Auto-Highlight Agent with generated clip queue, captions, and evidence metadata |
+| Explain key moments and tactical patterns | Moment Decoded, Why It Matters, counterfactual explanation, Tactical Lab, passing network, pressing intensity, shot map, and tactical catalogue |
+| Expand datasets for AI and analytics | `src/data/sample-match.json`, Dataset Forge, schema fields, validation state, and interactive Generate 5 events control |
+| Deliver insights for fans around the world in multiple languages | Seven-language switcher, casual/analyst/broadcaster/social personas, and plain-language narrative variants |
+| Deliver personalized experiences for studios, streaming platforms, and fans | Delivery Surfaces selector with Fan View, Studio Desk, and Streaming Platform payload previews |
+
+The demo remains intentionally deterministic and MOCK-mode. The visible seams are designed so a production implementation can replace the local event generator and answer functions with live tracking-provider adapters, Azure AI/GitHub Models, Fabric, Azure MCP, and durable Azure storage without changing the viewer-facing workflow.

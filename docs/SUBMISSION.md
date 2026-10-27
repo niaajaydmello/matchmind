@@ -31,3 +31,12 @@ MatchMind is an explainable football-intelligence workspace that turns live matc
 ## What is mocked
 
 The current demo uses fictional clubs, players, match events, charts, recap output, and chat answers. The Azure OpenAI/GitHub Models adapter, live sports provider adapter, persistent database, real auth, real video auto-eventing, and production evaluation loop are not connected. The README labels these as future integration seams rather than completed integrations.
+
+## Direct requirement evidence
+
+- **Real-time analysis:** Live Match Center simulates an incoming event stream, updates the match clock, highlights new events, and exposes a versioned event envelope plus a five-stage processing trace.
+- **Stories, highlights, and recaps:** Narrative Studio and Recap Studio generate persona-specific stories and four output formats. Auto-Highlight Agent scores three turning points and produces a visible clip package contract with captions and evidence.
+- **Tactical explanation:** Moment Decoded explains what happened, why it mattered, and what would have changed. Tactical Lab visualizes passing network, pressing intensity, and shot map evidence.
+- **Dataset expansion:** Dataset Forge starts from the 25-event match JSON and interactively adds labelled event rows for analytics, evaluation, and future model training.
+- **Global delivery:** The UI supports English, Hindi, Spanish, Arabic, Portuguese, French, and Mandarin labels plus persona-specific narrative modes.
+- **Personalized destinations:** Delivery Surfaces explicitly demonstrate Fan View, Studio Desk, and Streaming Platform outputs from the same underlying event facts.
